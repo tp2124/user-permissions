@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UserPermissions.API.Data;
+using UserPermissions.API.Dto;
 using UserPermissions.API.Models;
 
 namespace DatingApp.API.Controllers
@@ -40,9 +41,6 @@ namespace DatingApp.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] string newUserName)
         {
-            if (!ModelState.IsValid) 
-                return BadRequest(ModelState);
-
             newUserName = newUserName.ToLower();
 
             if (await _context.Users.AnyAsync(u => u.Username.Equals(newUserName)))
@@ -59,10 +57,18 @@ namespace DatingApp.API.Controllers
             return Ok(user);
         }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<IActionResult> Put(UserForEditDto editUser)
         {
+            editUser.Username = editUser.Username.ToLower();
+
+            User existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == editUser.Id);
+            if (existingUser == null) 
+                return BadRequest("User Id cannot be found.");
+
+            existingUser.Username = editUser.Username;
+            await _context.SaveChangesAsync();
+
+            return Ok(existingUser);
         }
 
         // DELETE api/values/5
