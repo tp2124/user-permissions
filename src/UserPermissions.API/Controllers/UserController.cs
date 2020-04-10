@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using UserPermissions.API.Data;
 
 namespace DatingApp.API.Controllers
 {
@@ -10,18 +12,27 @@ namespace DatingApp.API.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+        private readonly DataContext _context;
+
+        public UserController(DataContext context) {
+            _context = context;
+        }
+
         // GET api/values
         [HttpGet]
-        public ActionResult<IEnumerable<string>> Get()
+        public async Task<IActionResult> GetUsers()
         {
-            return new string[] { "value1", "value2" };
+            var users = await _context.Users.ToListAsync(); // Need to use ToList() in order to evaluate the query.
+
+            return Ok(users);
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
+        public async Task<IActionResult> GetUser(int id)
         {
-            return "value";
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            return Ok(user);
         }
 
         // POST api/values
