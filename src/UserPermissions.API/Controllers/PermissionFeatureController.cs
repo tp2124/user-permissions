@@ -20,12 +20,27 @@ namespace DatingApp.API.Controllers
             _context = context;
         }
 
-        // GET api/values/5
+#region Read-Only Endpoints
+
+#region Individual Items
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var matchingPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == id);
             return Ok(matchingPermissionFeature);
+        }
+
+        [HttpGet("{name}")]
+        public async Task<IActionResult> GetByName(string featureName) {
+            var matchingPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Name.Equals(featureName, StringComparison.OrdinalIgnoreCase));
+            return Ok(matchingPermissionFeature);
+        }
+#endregion // Individual Items
+
+#region Multiple Items
+        [HttpGet()]
+        public async Task<IActionResult> PermissionFeatures() {
+            return Ok(await _context.PermissionFeatures.ToListAsync());
         }
 
         [HttpGet("names")]
@@ -33,7 +48,11 @@ namespace DatingApp.API.Controllers
             var names = await _context.PermissionFeatures.Select(pf => pf.Name).ToListAsync();
             return Ok(names);
         }
+#endregion // Multiple Items
 
+#endregion // Read-Only
+
+#region Editing Endpoints
         [HttpPost()]
         public async Task<IActionResult> CreatePermissionFeature(FeatureForCreateDto featureForCreateDto)
         {
@@ -48,8 +67,8 @@ namespace DatingApp.API.Controllers
             // TODO: Make a repo to hold the logic for this to avoid having this code be limited to only this controller.
             // var createdFeature = _repo.CreatePermissionFeature(featureForCreateDto);
             // --- Abstract this logic ---
-            ICollection<User> permittedExistingUsers = new List<User>();
-            ICollection<UserGroup> permittedExistingUserGroups = new List<UserGroup>();
+            List<User> permittedExistingUsers = new List<User>();
+            List<UserGroup> permittedExistingUserGroups = new List<UserGroup>();
 
             if (featureForCreateDto.UsernamesAllowed != null) {
                 foreach (string includedUser in featureForCreateDto.UsernamesAllowed) {
@@ -80,16 +99,17 @@ namespace DatingApp.API.Controllers
             return Ok(createdFeature);
         }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
+            PermissionFeature deletedPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == id);
+            if (deletedPermissionFeature != null) {
+                _context.PermissionFeatures.Remove(deletedPermissionFeature);
+                await _context.SaveChangesAsync();
+            }
+            return Ok(deletedPermissionFeature);
         }
+#endregion
     }
 }
