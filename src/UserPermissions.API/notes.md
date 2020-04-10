@@ -15,4 +15,5 @@
     1. To get the reference for `DbContext` inheritence, use nuget package manager to get:  `Microsoft.EntityFrameworkCore` and get the `Microsoft.EntityFrameworkCore` package with the version that matches your .NET (3.1.1 for this example).
 1. Add `DataContext` as a service to the API to allow it to be used in various locations throughout the API.
     1. To add the reference for `UseSqlite` in `Startup.cs` changes to add the service, add nuget package: `Microsoft.EntityFrameworkCore.Sqlite`.
+1. Adding a `ConnectionStrings` to `appsettings.json` and using that in `Startup.cs`.
 
