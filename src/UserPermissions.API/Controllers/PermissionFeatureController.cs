@@ -103,11 +103,25 @@ namespace DatingApp.API.Controllers
         }
 
         // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpDelete()]
+        public async Task<IActionResult> Delete([FromBody] BasicFeatureDto deleteFeatureReq)
         {
-            PermissionFeature deletedPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == id);
+            PermissionFeature deletedPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == deleteFeatureReq.Id);
+            if (deletedPermissionFeature == null || !deletedPermissionFeature.Name.Equals(deleteFeatureReq.FeatureName, StringComparison.OrdinalIgnoreCase)) {
+                return Ok("Unable to find matching Permission Feature.");
+            }
+
             if (deletedPermissionFeature != null) {
+                // Use .Reference instead of .Collection for related data that is a single item and not a list.
+                // https://docs.microsoft.com/en-us/ef/core/querying/related-data
+                _context.Entry(deletedPermissionFeature)
+                    .Collection(pf => pf.PermittedUsers)
+                    .Load();
+                    
+                _context.Entry(deletedPermissionFeature)
+                    .Collection(pf => pf.PermittedUserGroups)
+                    .Load();
+
                 _context.PermissionFeatures.Remove(deletedPermissionFeature);
                 await _context.SaveChangesAsync();
             }
