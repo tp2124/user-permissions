@@ -3,13 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using UserPermissions.API.Data;
 
 namespace DatingApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccessibilityController : ControllerBase
+    public class PermissionFeatureController : ControllerBase
     {
+        private readonly DataContext _context;
+
+        public PermissionFeatureController(DataContext context) {
+            _context = context;
+        }
+
         // GET api/values
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
@@ -22,6 +30,12 @@ namespace DatingApp.API.Controllers
         public ActionResult<string> Get(int id)
         {
             return "value";
+        }
+
+        [HttpGet("names")]
+        public async Task<IActionResult> PermissionFeatureNames() {
+            var names = await _context.PermissionFeatures.Select(pf => pf.Name).ToListAsync();
+            return Ok(names);
         }
 
         // POST api/values

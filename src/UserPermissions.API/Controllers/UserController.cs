@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UserPermissions.API.Data;
+using UserPermissions.API.Models;
 
 namespace DatingApp.API.Controllers
 {
@@ -37,8 +38,26 @@ namespace DatingApp.API.Controllers
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<IActionResult> Post([FromBody] string newUserName)
         {
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
+
+            newUserName = newUserName.ToLower();
+
+            if (await _context.Users.AnyAsync(u => u.Username.Equals(newUserName, StringComparison.OrdinalIgnoreCase))) {
+                return BadRequest("User already exists.");
+            }
+
+            // Converting from Dto or input from client to Model to pass to Repository logic. Repository will be able to handle
+            // both data formats (Dto and DB Models).
+            User user = new User {
+                Username = newUserName
+            };
+
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+            return Ok(user);
         }
 
         // PUT api/values/5
