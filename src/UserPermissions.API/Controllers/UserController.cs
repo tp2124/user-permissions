@@ -45,9 +45,8 @@ namespace DatingApp.API.Controllers
 
             newUserName = newUserName.ToLower();
 
-            if (await _context.Users.AnyAsync(u => u.Username.Equals(newUserName, StringComparison.OrdinalIgnoreCase))) {
+            if (await _context.Users.AnyAsync(u => u.Username.Equals(newUserName)))
                 return BadRequest("User already exists.");
-            }
 
             // Converting from Dto or input from client to Model to pass to Repository logic. Repository will be able to handle
             // both data formats (Dto and DB Models).
