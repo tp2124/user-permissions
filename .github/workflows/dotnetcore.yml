@@ -17,7 +17,7 @@ jobs:
       run: | 
         dotnet restore src/UserPermissions.API
         dotnet tool install --global dotnet-ef
-        dotnet ef database update src/UserPermissions.API
+        dotnet ef database update --project ./src/UserPermissions.API/UserPermissions.API.csproj
     - name: Build with dotnet
       run: dotnet build ./src/UserPermissions.API/UserPermissions.API.csproj --configuration Release
     # - name: Tests with dotnet
