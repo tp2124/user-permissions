@@ -102,29 +102,51 @@ namespace DatingApp.API.Controllers
             return Ok(createdFeature);
         }
 
-        // DELETE api/values/5
+        [HttpPut()]
+        public async Task<IActionResult> Edit(FeatureForEditDto editFeatureReq) {
+            PermissionFeature editingPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == editFeatureReq.FeatureId);
+            if (editingPermissionFeature == null)
+                return Ok("Unable to find matching Permission Feature.");
+
+            await _context.Entry(editingPermissionFeature)
+                .Collection(pf => pf.PermittedUsers)
+                .LoadAsync();
+            await _context.Entry(editingPermissionFeature)
+                .Collection(pf => pf.PermittedUserGroups)
+                .LoadAsync();
+
+            HashSet<int> hashedIncludedUserIds = new HashSet<int>(editFeatureReq.UserIds);
+            HashSet<int> hashedIncludedUserGroups = new HashSet<int>(editFeatureReq.UserGroupIds);
+
+            editingPermissionFeature.PermittedUsers = await _context.Users.Where(u => hashedIncludedUserIds.Contains(u.Id)).ToListAsync();
+            editingPermissionFeature.PermittedUserGroups = await _context.UserGroups.Where(ug => hashedIncludedUserGroups.Contains(ug.Id)).ToListAsync();
+
+            await _context.SaveChangesAsync();
+
+            return Ok(editingPermissionFeature);
+        }
+
         [HttpDelete()]
-        public async Task<IActionResult> Delete([FromBody] BasicFeatureDto deleteFeatureReq)
+        public async Task<IActionResult> Delete(BasicFeatureDto deleteFeatureReq)
         {
             PermissionFeature deletedPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == deleteFeatureReq.Id);
             if (deletedPermissionFeature == null || !deletedPermissionFeature.Name.Equals(deleteFeatureReq.FeatureName, StringComparison.OrdinalIgnoreCase)) {
                 return Ok("Unable to find matching Permission Feature.");
             }
 
-            if (deletedPermissionFeature != null) {
                 // Use .Reference instead of .Collection for related data that is a single item and not a list.
                 // https://docs.microsoft.com/en-us/ef/core/querying/related-data
-                _context.Entry(deletedPermissionFeature)
+            await _context.Entry(deletedPermissionFeature)
                     .Collection(pf => pf.PermittedUsers)
-                    .Load();
+                .LoadAsync();
                     
-                _context.Entry(deletedPermissionFeature)
+            await _context.Entry(deletedPermissionFeature)
                     .Collection(pf => pf.PermittedUserGroups)
-                    .Load();
+                .LoadAsync();
 
                 _context.PermissionFeatures.Remove(deletedPermissionFeature);
                 await _context.SaveChangesAsync();
-            }
+
             return Ok(deletedPermissionFeature);
         }
 #endregion
