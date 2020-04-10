@@ -57,6 +57,7 @@ namespace DatingApp.API.Controllers
             return Ok(user);
         }
 
+        [HttpPut]
         public async Task<IActionResult> Put(UserForEditDto editUser)
         {
             editUser.Username = editUser.Username.ToLower();
@@ -73,8 +74,16 @@ namespace DatingApp.API.Controllers
 
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
+            User deletingUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (deletingUser == null)
+                return BadRequest("Cannot find User.");
+            
+            _context.Users.Remove(deletingUser);
+            await _context.SaveChangesAsync();
+
+            return Ok(deletingUser);
         }
     }
 }
