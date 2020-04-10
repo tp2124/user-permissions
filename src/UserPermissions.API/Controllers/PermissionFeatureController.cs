@@ -38,7 +38,7 @@ namespace DatingApp.API.Controllers
 #endregion // Individual Items
 
 #region Multiple Items
-        [HttpGet()]
+        [HttpGet("full-data")]
         public async Task<IActionResult> PermissionFeatures() {
             return Ok(await _context.PermissionFeatures
                 .Include(pf => pf.PermittedUsers)
@@ -46,10 +46,13 @@ namespace DatingApp.API.Controllers
                 .ToListAsync());
         }
 
-        [HttpGet("names")]
+        [HttpGet()]
         public async Task<IActionResult> PermissionFeatureNames() {
-            var names = await _context.PermissionFeatures.Select(pf => pf.Name).ToListAsync();
-            return Ok(names);
+            IEnumerable<BasicFeatureDto> features = await _context.PermissionFeatures.Select(pf => new BasicFeatureDto {
+                    Id = pf.Id,
+                    FeatureName = pf.Name    
+                }).ToListAsync();
+            return Ok(features);
         }
 #endregion // Multiple Items
 
@@ -134,18 +137,18 @@ namespace DatingApp.API.Controllers
                 return Ok("Unable to find matching Permission Feature.");
             }
 
-                // Use .Reference instead of .Collection for related data that is a single item and not a list.
-                // https://docs.microsoft.com/en-us/ef/core/querying/related-data
+            // Use .Reference instead of .Collection for related data that is a single item and not a list.
+            // https://docs.microsoft.com/en-us/ef/core/querying/related-data
             await _context.Entry(deletedPermissionFeature)
-                    .Collection(pf => pf.PermittedUsers)
+                .Collection(pf => pf.PermittedUsers)
                 .LoadAsync();
-                    
+                
             await _context.Entry(deletedPermissionFeature)
-                    .Collection(pf => pf.PermittedUserGroups)
+                .Collection(pf => pf.PermittedUserGroups)
                 .LoadAsync();
 
-                _context.PermissionFeatures.Remove(deletedPermissionFeature);
-                await _context.SaveChangesAsync();
+            _context.PermissionFeatures.Remove(deletedPermissionFeature);
+            await _context.SaveChangesAsync();
 
             return Ok(deletedPermissionFeature);
         }
