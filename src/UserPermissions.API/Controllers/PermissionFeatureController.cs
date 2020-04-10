@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UserPermissions.API.Data;
+using UserPermissions.API.Dto;
+using UserPermissions.API.Models;
 
 namespace DatingApp.API.Controllers
 {
@@ -18,18 +20,12 @@ namespace DatingApp.API.Controllers
             _context = context;
         }
 
-        // GET api/values
-        [HttpGet]
-        public ActionResult<IEnumerable<string>> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
         // GET api/values/5
         [HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
-            return "value";
+            var matchingPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == id);
+            return Ok(matchingPermissionFeature);
         }
 
         [HttpGet("names")]
@@ -38,10 +34,50 @@ namespace DatingApp.API.Controllers
             return Ok(names);
         }
 
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPost()]
+        public async Task<IActionResult> CreatePermissionFeature(FeatureForCreateDto featureForCreateDto)
         {
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
+
+            featureForCreateDto.FeatureName = featureForCreateDto.FeatureName.ToLower();
+
+            if (await _context.PermissionFeatures.AnyAsync(pf => pf.Name.Equals(featureForCreateDto.FeatureName))) 
+                return BadRequest("Permission Feature already exists.");
+            
+            // TODO: Make a repo to hold the logic for this to avoid having this code be limited to only this controller.
+            // var createdFeature = _repo.CreatePermissionFeature(featureForCreateDto);
+            // --- Abstract this logic ---
+            ICollection<User> permittedExistingUsers = new List<User>();
+            ICollection<UserGroup> permittedExistingUserGroups = new List<UserGroup>();
+
+            if (featureForCreateDto.UsernamesAllowed != null) {
+                foreach (string includedUser in featureForCreateDto.UsernamesAllowed) {
+                    User existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username.Equals(includedUser.ToLower()));
+                    if (existingUser != null) {
+                        permittedExistingUsers.Add(existingUser);
+                    }
+                }
+            }
+
+            if (featureForCreateDto.UserGroupsAllowed != null) {
+                foreach (string includedUserGroup in featureForCreateDto.UserGroupsAllowed) {
+                    UserGroup existingUserGroup = await _context.UserGroups.FirstOrDefaultAsync(ug => ug.Name.Equals(includedUserGroup));
+                    if (existingUserGroup != null) {
+                        permittedExistingUserGroups.Add(existingUserGroup);
+                    }
+                }
+            }
+
+            PermissionFeature createdFeature = new PermissionFeature{
+                Name = featureForCreateDto.FeatureName,
+                PermittedUsers = permittedExistingUsers,
+                PermittedUserGroups = permittedExistingUserGroups
+            };
+            await _context.PermissionFeatures.AddAsync(createdFeature);
+            await _context.SaveChangesAsync();
+            // --- End abstract this logic ---
+            return Ok(createdFeature);
         }
 
         // PUT api/values/5
