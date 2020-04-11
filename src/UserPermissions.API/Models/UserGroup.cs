@@ -6,7 +6,7 @@ namespace UserPermissions.API.Models
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public ICollection<User> IncludedUsers { get; set; }
-        public ICollection<UserGroup> IncludedUserGroups { get; set; }
+        public IEnumerable<User> IncludedUsers { get; set; }
+        public IEnumerable<UserGroup> IncludedUserGroups { get; set; }
     }
 }
