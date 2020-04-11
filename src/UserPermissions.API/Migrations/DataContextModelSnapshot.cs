@@ -30,13 +30,25 @@ namespace UserPermissions.API.Migrations
                     b.ToTable("PermissionFeatures");
                 });
 
+            modelBuilder.Entity("UserPermissions.API.Models.PermissionFeatureUser", b =>
+                {
+                    b.Property<int>("PermissionFeatureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("PermissionFeatureId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PermissionFeatureUsers");
+                });
+
             modelBuilder.Entity("UserPermissions.API.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("PermissionFeatureId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("UserGroupId")
@@ -46,8 +58,6 @@ namespace UserPermissions.API.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("PermissionFeatureId");
 
                     b.HasIndex("UserGroupId");
 
@@ -78,12 +88,23 @@ namespace UserPermissions.API.Migrations
                     b.ToTable("UserGroups");
                 });
 
+            modelBuilder.Entity("UserPermissions.API.Models.PermissionFeatureUser", b =>
+                {
+                    b.HasOne("UserPermissions.API.Models.PermissionFeature", "PermissionFeature")
+                        .WithMany("PermissionFeatureUsers")
+                        .HasForeignKey("PermissionFeatureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UserPermissions.API.Models.User", "User")
+                        .WithMany("PermissionFeatureUsers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("UserPermissions.API.Models.User", b =>
                 {
-                    b.HasOne("UserPermissions.API.Models.PermissionFeature", null)
-                        .WithMany("PermittedUsers")
-                        .HasForeignKey("PermissionFeatureId");
-
                     b.HasOne("UserPermissions.API.Models.UserGroup", null)
                         .WithMany("IncludedUsers")
                         .HasForeignKey("UserGroupId");

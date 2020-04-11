@@ -6,7 +6,9 @@ namespace UserPermissions.API.Models
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public IEnumerable<User> PermittedUsers { get; set; }
         public IEnumerable<UserGroup> PermittedUserGroups { get; set; }
+
+        // Fluent API Support for *-to-many relationships
+        public IEnumerable<PermissionFeatureUser> PermissionFeatureUsers { get; set; }
     }
 }

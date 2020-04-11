@@ -22,28 +22,47 @@ namespace DatingApp.API.Controllers
 
 #region Read-Only Endpoints
 
-#region Individual Items
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var matchingPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == id);
-            return Ok(matchingPermissionFeature);
-        }
+// #region Individual Items
+//         [HttpGet("id/{id}")]
+//         public async Task<IActionResult> GetById(int id)
+//         {
+//             var matchingPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == id);
+//             return Ok(matchingPermissionFeature);
+//         }
 
-        [HttpGet("{name}")]
-        public async Task<IActionResult> GetByName(string featureName) {
-            var matchingPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Name.Equals(featureName));
-            return Ok(matchingPermissionFeature);
-        }
+//         [HttpGet("name/{name}")]
+//         public async Task<IActionResult> GetByName(string featureName) {
+//             var matchingPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Name.Equals(featureName));
+//             return Ok(matchingPermissionFeature);
+//         }
 #endregion // Individual Items
 
 #region Multiple Items
+        [HttpGet("users/{id}")]
+        public async Task<IActionResult> GetUsersById(int id) {
+            var matchingPermissionFeature = await _context.PermissionFeatures.FirstOrDefaultAsync(pf => pf.Id == id);
+            await _context.Entry(matchingPermissionFeature)
+                .Collection(pf => pf.PermissionFeatureUsers)
+                .LoadAsync();
+
+            foreach (PermissionFeatureUser permissionFeatureUser in matchingPermissionFeature.PermissionFeatureUsers) {
+                await _context.Entry(permissionFeatureUser)
+                    .Reference(pfu => pfu.User)
+                    .LoadAsync();
+            }
+            
+            IEnumerable<string> matchingUsers = matchingPermissionFeature.PermissionFeatureUsers.Select(pfu => pfu.User.Username);
+            return Ok(matchingUsers);
+        }
+
         [HttpGet("detailed")]
         public async Task<IActionResult> PermissionFeatures() {
-            return Ok(await _context.PermissionFeatures
-                .Include(pf => pf.PermittedUsers)
-                .Include(pf => pf.PermittedUserGroups)
-                .ToListAsync());
+            var temp = await _context.PermissionFeatures
+                        .Include(pf => pf.PermissionFeatureUsers)
+                        .Include(pf => pf.PermittedUserGroups)
+                        .ToListAsync();
+
+            return Ok(temp);
         }
 
         [HttpGet()]
@@ -62,29 +81,16 @@ namespace DatingApp.API.Controllers
         [HttpPost()]
         public async Task<IActionResult> CreatePermissionFeature(FeatureForCreateDto featureForCreateDto)
         {
-            if (!ModelState.IsValid) 
-                return BadRequest(ModelState);
-
-            featureForCreateDto.FeatureName = featureForCreateDto.FeatureName.ToLower();
-
             if (await _context.PermissionFeatures.AnyAsync(pf => pf.Name.Equals(featureForCreateDto.FeatureName))) 
                 return BadRequest("Permission Feature already exists.");
             
             // TODO: Make a repo to hold the logic for this to avoid having this code be limited to only this controller.
             // var createdFeature = _repo.CreatePermissionFeature(featureForCreateDto);
             // --- Abstract this logic ---
-            ICollection<User> permittedExistingUsers = new List<User>();
+
+
+            // -------TODO Replace this
             ICollection<UserGroup> permittedExistingUserGroups = new List<UserGroup>();
-
-            if (featureForCreateDto.UsernamesAllowed != null) {
-                foreach (string includedUser in featureForCreateDto.UsernamesAllowed) {
-                    User existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username.Equals(includedUser.ToLower()));
-                    if (existingUser != null) {
-                        permittedExistingUsers.Add(existingUser);
-                    }
-                }
-            }
-
             if (featureForCreateDto.UserGroupsAllowed != null) {
                 foreach (string includedUserGroup in featureForCreateDto.UserGroupsAllowed) {
                     UserGroup existingUserGroup = await _context.UserGroups.FirstOrDefaultAsync(ug => ug.Name.Equals(includedUserGroup));
@@ -93,13 +99,34 @@ namespace DatingApp.API.Controllers
                     }
                 }
             }
-
             PermissionFeature createdFeature = new PermissionFeature{
                 Name = featureForCreateDto.FeatureName,
-                PermittedUsers = permittedExistingUsers,
                 PermittedUserGroups = permittedExistingUserGroups
             };
+            // -------TODO Replace this
+
+
             await _context.PermissionFeatures.AddAsync(createdFeature);
+            await _context.SaveChangesAsync();
+
+            ICollection<PermissionFeatureUser> permittedFeatureUsers = new List<PermissionFeatureUser>();
+
+            if (featureForCreateDto.UsernamesAllowed != null) {
+                foreach (string includedUser in featureForCreateDto.UsernamesAllowed) {
+                    User existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username.Equals(includedUser.ToLower()));
+                    if (existingUser != null) {
+                        permittedFeatureUsers.Add(new PermissionFeatureUser {
+                                                    User = existingUser,
+                                                    UserId = existingUser.Id,
+                                                    PermissionFeature = createdFeature,
+                                                    PermissionFeatureId = createdFeature.Id
+                                                });
+                    }
+                }
+            }
+
+            createdFeature.PermissionFeatureUsers = permittedFeatureUsers;
+            await _context.PermissionFeatureUsers.AddRangeAsync(permittedFeatureUsers);
             await _context.SaveChangesAsync();
             // --- End abstract this logic ---
             return Ok(createdFeature);
@@ -112,7 +139,7 @@ namespace DatingApp.API.Controllers
                 return Ok("Unable to find matching Permission Feature.");
 
             await _context.Entry(editingPermissionFeature)
-                .Collection(pf => pf.PermittedUsers)
+                .Collection(pf => pf.PermissionFeatureUsers)
                 .LoadAsync();
             await _context.Entry(editingPermissionFeature)
                 .Collection(pf => pf.PermittedUserGroups)
@@ -121,7 +148,10 @@ namespace DatingApp.API.Controllers
             HashSet<int> hashedIncludedUserIds = new HashSet<int>(editFeatureReq.UserIds);
             HashSet<int> hashedIncludedUserGroups = new HashSet<int>(editFeatureReq.UserGroupIds);
 
-            editingPermissionFeature.PermittedUsers = await _context.Users.Where(u => hashedIncludedUserIds.Contains(u.Id)).ToListAsync();
+            editingPermissionFeature.PermissionFeatureUsers = await _context.PermissionFeatureUsers.Where(pfu => 
+                                                                                                        hashedIncludedUserIds.Contains(pfu.UserId) &&
+                                                                                                        pfu.PermissionFeatureId == editingPermissionFeature.Id
+                                                                                                    ).ToListAsync();
             editingPermissionFeature.PermittedUserGroups = await _context.UserGroups.Where(ug => hashedIncludedUserGroups.Contains(ug.Id)).ToListAsync();
 
             await _context.SaveChangesAsync();
@@ -140,7 +170,7 @@ namespace DatingApp.API.Controllers
             // Use .Reference instead of .Collection for related data that is a single item and not a list.
             // https://docs.microsoft.com/en-us/ef/core/querying/related-data
             await _context.Entry(deletedPermissionFeature)
-                .Collection(pf => pf.PermittedUsers)
+                .Collection(pf => pf.PermissionFeatureUsers)
                 .LoadAsync();
                 
             await _context.Entry(deletedPermissionFeature)
