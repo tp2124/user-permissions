@@ -24,17 +24,14 @@ namespace DatingApp.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _context.Users.ToListAsync(); // Need to use ToList() in order to evaluate the query.
-
-            return Ok(users);
+            return Ok(await _context.Users.ToListAsync());
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(int id)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
-            return Ok(user);
+            return Ok(await _context.Users.FirstOrDefaultAsync(u => u.Id == id));
         }
 
         // POST api/values

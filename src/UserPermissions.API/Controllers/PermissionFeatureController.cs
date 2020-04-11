@@ -38,7 +38,7 @@ namespace DatingApp.API.Controllers
 #endregion // Individual Items
 
 #region Multiple Items
-        [HttpGet("full-data")]
+        [HttpGet("detailed")]
         public async Task<IActionResult> PermissionFeatures() {
             return Ok(await _context.PermissionFeatures
                 .Include(pf => pf.PermittedUsers)
