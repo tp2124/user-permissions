@@ -4,5 +4,7 @@ namespace UserPermissions.API.Models
     {
         public int Id { get; set; }
         public string Username { get; set; }
+        public PermissionFeature PermissionFeature { get; set; }
+        public int PermissionFeatureId { get; set; }
     }
 }

@@ -1,0 +1,41 @@
+[
+  {
+    "Name": "Pet Syu",
+    "Description": "Such a supportive activity.",
+    "PermittedUsers": [
+      {
+        "Username": "Pu"
+      }
+    ]
+  },
+  {
+    "Name": "Hug Pu",
+    "Description": "Great for feeling vulnerable.",
+    "PermittedUsers": [
+      {
+        "Username": "Jialin"
+      }
+    ]
+  },
+  {
+    "Name": "Play with Whiskers",
+    "Description": "Lots of fun for Whiskers.",
+    "PermittedUsers": [
+      {
+        "Username": "Travis"
+      }
+    ]
+  },
+  {
+    "Name": "Do Work",
+    "Description": "Make lots of money.",
+    "PermittedUsers": [
+      {
+        "Username": "lame people"
+      },
+      { 
+        "Username": "try hards"
+      }
+    ]
+  }
+]
