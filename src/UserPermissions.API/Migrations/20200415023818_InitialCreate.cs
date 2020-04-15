@@ -12,7 +12,8 @@ namespace UserPermissions.API.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(nullable: true)
+                    Name = table.Column<string>(nullable: true),
+                    Description = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -25,25 +26,11 @@ namespace UserPermissions.API.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(nullable: true),
-                    PermissionFeatureId = table.Column<int>(nullable: true),
-                    UserGroupId = table.Column<int>(nullable: true)
+                    Name = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_UserGroups", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_UserGroups_PermissionFeatures_PermissionFeatureId",
-                        column: x => x.PermissionFeatureId,
-                        principalTable: "PermissionFeatures",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_UserGroups_UserGroups_UserGroupId",
-                        column: x => x.UserGroupId,
-                        principalTable: "UserGroups",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -53,8 +40,7 @@ namespace UserPermissions.API.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Username = table.Column<string>(nullable: true),
-                    PermissionFeatureId = table.Column<int>(nullable: true),
-                    UserGroupId = table.Column<int>(nullable: true)
+                    PermissionFeatureId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -64,43 +50,22 @@ namespace UserPermissions.API.Migrations
                         column: x => x.PermissionFeatureId,
                         principalTable: "PermissionFeatures",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Users_UserGroups_UserGroupId",
-                        column: x => x.UserGroupId,
-                        principalTable: "UserGroups",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.NoAction);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserGroups_PermissionFeatureId",
-                table: "UserGroups",
-                column: "PermissionFeatureId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserGroups_UserGroupId",
-                table: "UserGroups",
-                column: "UserGroupId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_PermissionFeatureId",
                 table: "Users",
                 column: "PermissionFeatureId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_UserGroupId",
-                table: "Users",
-                column: "UserGroupId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "UserGroups");
 
             migrationBuilder.DropTable(
-                name: "UserGroups");
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "PermissionFeatures");
