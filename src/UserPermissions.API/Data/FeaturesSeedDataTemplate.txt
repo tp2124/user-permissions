@@ -1,0 +1,14 @@
+Use this format at: https://www.json-generator.com/
+
+[
+  '{{repeat(5)}}',
+  {
+    Name: '{{firstName()}}',
+    Description: '{{lorem(1, "sentences")}}',
+    PermittedUsers: [
+      {
+        Username: '{{firstName("male")}}'
+      }
+    ]
+  }
+]
