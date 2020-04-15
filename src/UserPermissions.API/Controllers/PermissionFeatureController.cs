@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UserPermissions.API.Data;
@@ -15,22 +16,26 @@ namespace DatingApp.API.Controllers
     public class PermissionFeatureController : ControllerBase
     {
         private readonly IUserPermissionsRepository _repo;
+        private readonly IMapper _mapper;
 
-        public PermissionFeatureController(IUserPermissionsRepository repo) {
+        public PermissionFeatureController(IUserPermissionsRepository repo, IMapper mapper) {
             _repo = repo;
+            _mapper = mapper;
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPermissionFeature(int id)
         {
-            var matchingPermissionFeature = await _repo.GetPermissionFeature(id);
-            return Ok(matchingPermissionFeature);
+            var permissionFeature = await _repo.GetPermissionFeature(id);
+            var pfToReturn = _mapper.Map<FeatureForDetailedDto>(permissionFeature);
+            return Ok(pfToReturn);
         }
 
         [HttpGet()]
         public async Task<IActionResult> GetPermissionFeatures() {
-            var features = await _repo.GetPermissionFeatures();
-            return Ok(features);
+            var permissionFeatures = await _repo.GetPermissionFeatures();
+            var pfsToReturn = _mapper.Map<IEnumerable<FeatureForListDto>>(permissionFeatures);
+            return Ok(pfsToReturn);
         }
 
         // [HttpPost()]
