@@ -1,0 +1,37 @@
+name: Publish DTOs
+
+on: [push]
+
+# on:
+#   push:
+#     branches:
+#       - master
+#   pull_request:
+#     types: [closed]
+#     branches:
+#       - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # env:
+      #   NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}  
+
+    - uses: actions/checkout@v1
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.102
+
+    # - name: Publish NuGet
+    #   uses: brandedoutcast/publish-nuget@v2.5.2
+
+    - name: Build Package
+      working-directory: src/UserPermissions.Dto
+      run: dotnet pack -o nuget
+    - name: Publish Package
+      working-directory: src/UserPermissions.Dto
+      run: dotnet nuget push nuget/*.nupkg -k ${{secrets.NUGET_KEY}} -s https://api.nuget.org/v3/index.json
