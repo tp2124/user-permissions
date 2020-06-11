@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UserPermissions.API.Data;
-using UserPermissions.API.Dto;
 using UserPermissions.API.Models;
+using UserPermissions.Dto;
 
 namespace DatingApp.API.Controllers
 {
