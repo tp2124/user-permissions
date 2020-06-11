@@ -1,22 +1,25 @@
-name: publish to nuget
-on: [push]
-  # push:
-  #   branches:
-  #     - master # Default release branch
+#
+# GitHub Actions shared solution
+#
+name: Publish Dto Package to Nuget
+on:
+  push:
+    branches:
+      - master
 jobs:
   publish:
-    name: build, pack & publish
+    name: Build, Pack, & Publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup dotnet
+      - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 3.1.200
 
       # Publish
-      - name: publish on version change
+      - name: Publish if Version Changed
         id: publish_nuget
         uses: rohith/publish-nuget@v2
         with:
@@ -51,6 +54,9 @@ jobs:
           INCLUDE_SYMBOLS: true
 
 
+#
+# Personally written solution. This does not check for version updates.
+#
 
 # name: Publish DTOs
 
